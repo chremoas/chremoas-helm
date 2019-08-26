@@ -1,0 +1,64 @@
+{{- range .Values.serviceList }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ $.Release.Namespace }}
+  name: {{ $.Release.Name }}-{{ .name }}
+  labels:
+    app.kubernetes.io/name: {{ $.Chart.Name }}
+    helm.sh/chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    name: {{ $.Release.Name }}-{{ .name }}
+spec:
+  replicas: {{ $.Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $.Chart.Name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $.Chart.Name }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        name: {{ $.Release.Name }}-{{ .name }}
+    spec:
+    {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 9 }}
+    {{- end }}
+      containers:
+        - name: {{ .name }}
+          image: {{ .repository }}/{{ .name }}:{{ .tag }}
+          imagePullPolicy: {{ $.Values.pullPolicy }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: CONSUL
+              value: $(HOST_IP):8500
+            - name: MICRO_REGISTRY_ADDRESS
+              value: $(HOST_IP):8500
+            - name: MICRO_CLIENT_REQUEST_TIMEOUT
+              value: 5m
+            - name: MICRO_REGISTRY
+              value: consul
+            - name: CONFIG_NAMESPACE
+              value: {{ $.Release.Name }}
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+      {{- with $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

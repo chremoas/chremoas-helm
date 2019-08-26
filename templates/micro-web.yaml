@@ -2,12 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: {{ .Release.Namespace}}
-  name: {{ .Release.Name }}-auth-srv
+  name: {{ .Release.Name }}-micro-web
   labels:
-    name: {{ .Release.Name }}-auth-srv
+    name: {{ .Release.Name }}-micro-web
 {{ include "chremoas-helm.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.auth_srv.replicas }}
+  replicas: {{ .Values.micro_web.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "chremoas-helm.name" . }}
@@ -17,41 +17,22 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "chremoas-helm.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        name: {{ .Release.Name }}-auth-srv
+        name: {{ .Release.Name }}-micro-web
     spec:
-      serviceAccountName: {{ .Values.serviceAccountName }}
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 9 }}
     {{- end }}
-      initContainers:
-      # The init-certs container sends a certificate signing request to the
-      # kubernetes cluster.
-      # You can see pending requests using: kubectl get csr
-      # CSRs can be approved using:         kubectl certificate approve <csr name>
-      #
-      # In addition to the client certificate and key, the init-certs entrypoint will symlink
-      # the cluster CA to the certs directory.
-        - name: init-certs
-          image: cockroachdb/cockroach-k8s-request-cert:{{ .Values.auth_srv.initCertsVersion }}
-          imagePullPolicy: {{ .Values.pdefaultullPolicy }}
-          command:
-            - "/bin/ash"
-            - "-ecx"
-            - "/request-cert -namespace=${POD_NAMESPACE} -certs-dir=/cockroach-certs -type=client -user={{ .Values.chremoasDBUser }} -symlink-ca-from=/var/run/
-    secrets/kubernetes.io/serviceaccount/ca.crt"
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          volumeMounts:
-            - name: client-certs
-              mountPath: /cockroach-certs
       containers:
-        - name: auth-srv
-          image: "{{ .Values.auth_srv.image }}:{{ .Values.auth_srv.tag }}"
+        - name: micro-web
+          image: "{{ .Values.micro_web.image }}:{{ .Values.micro_web.tag }}"
           imagePullPolicy: {{ .Values.pullPolicy }}
+          command:
+            - /micro
+            - --registry_address=$(HOST_IP):8500
+            - --register_interval=5
+            - --register_ttl=10
+            - web
           env:
             - name: HOST_IP
               valueFrom:
@@ -65,8 +46,6 @@ spec:
               value: 5m
             - name: MICRO_REGISTRY
               value: consul
-            - name: CONFIG_NAMESPACE
-              value: {{ .Release.Name }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
