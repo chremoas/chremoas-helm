@@ -99,7 +99,7 @@ serviceList:
     tag: v1.2.5
   - name: role-srv
     repository: chremoas
-    tag: v1.2.6
+    tag: v1.2.7
   - name: sig-cmd
     repository: chremoas
     tag: v1.2.5
