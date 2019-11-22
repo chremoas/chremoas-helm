@@ -19,7 +19,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         name: {{ .Release.Name }}-auth-srv
     spec:
-      serviceAccountName: {{ .Values.serviceAccountName }}
+      serviceAccountName: {{ .Release.Name }}-{{ .Values.serviceAccountName }}
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 9 }}
@@ -34,7 +34,7 @@ spec:
       # the cluster CA to the certs directory.
         - name: init-certs
           image: cockroachdb/cockroach-k8s-request-cert:{{ .Values.auth_srv.initCertsVersion }}
-          imagePullPolicy: {{ .Values.pdefaultullPolicy }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
           command:
             - "/bin/ash"
             - "-ecx"
