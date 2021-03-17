@@ -2,10 +2,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-#configNamespace: default
-serviceAccountName: cockroachdb-shared-cockroachdb
-chremoasDBUser: chremoas-aba
-#chremoasDBUser: chremoas-dev
+configNamespace: com.aba-eve
+chremoasDBUser: chremoas_aba
 
 pullPolicy: IfNotPresent
 
@@ -27,8 +25,10 @@ auth_web_fqdn: discord.aba-eve.com
 #auth_web_fqdn: chremoas-dev.4amlunch.net
 
 resources:
-   limits:
-     memory: 64Mi
+  limits:
+    memory: 512Mi
+  requests:
+    memory: 5Mi
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -46,74 +46,67 @@ tolerations: []
 
 affinity: {}
 
-# Service Specific Values
-
-# This should *never* have its replicas set to more than 1. Not until we implement some manner of
-# master/slave controls
-chremoas:
-  image: chremoas/chremoas
-  tag: v1.2.5
-  replicas: 1
-
-# This needs to be 1 the first time you start the service so you can accept the CSR for CockroachDB.
-# Don't increase this until after you've done that or bad things will happen according to the docs.
-auth_srv:
-  image: chremoas/auth-srv
-  tag: v1.2.6
-  replicas: 2
-  initCertsVersion: 0.4
-
 #micro_web:
 #  image: microhq/micro
 #  tag: latest
 #  replicas: 1
 
 serviceList:
+  # This should *never* have its replicas set to more than 1. Not until we implement some manner of
+  # master/slave controls
+  - name: chremoas
+    repository: chremoas
+    tag: v1.3.3
+    replicas: 1
   - name: discord-gateway
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.8
     replicas: 1
   - name: auth-esi-poller
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.4
     replicas: 1
   - name: auth-web
     repository: chremoas
-    tag: v1.2.6
+    tag: v1.3.3
+    replicas: 1
+  - name: auth-srv
+    repository: chremoas
+    tag: v1.3.2
     replicas: 1
   - name: esi-srv
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.3
     replicas: 2
   - name: perms-srv
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.3
     replicas: 2
   - name: role-srv
     repository: chremoas
-    tag: v1.2.13
+    tag: v1.3.3
     replicas: 2
   - name: auth-cmd
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.4
     replicas: 2
   - name: filter-cmd
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.2
     replicas: 2
   - name: lookup-cmd
     repository: chremoas
-    tag: v1.2.5
-    replicas: 2
+    tag: v1.3.2
+    replicas: 1
   - name: perms-cmd
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.2
     replicas: 2
   - name: role-cmd
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.2
     replicas: 2
   - name: sig-cmd
     repository: chremoas
-    tag: v1.2.5
+    tag: v1.3.1
     replicas: 2

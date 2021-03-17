@@ -32,6 +32,10 @@ spec:
         - name: {{ .name }}
           image: {{ .repository }}/{{ .name }}:{{ .tag }}
           imagePullPolicy: {{ $.Values.pullPolicy }}
+          ports:
+            - containerPort: 9001
+              protocol: TCP
+              name: prom-metrics
           env:
             - name: HOST_IP
               valueFrom:
